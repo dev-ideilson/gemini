@@ -73,8 +73,8 @@ async function on_generation() {
 </script>
 
 <template>
-    <div class="flex flex-col h-screen overflow-hidden relative">
-        <div ref="chatContainer" class="flex flex-col space-y-4 w-full max-w-4xl px-4 pt-6 pb-36 mx-auto overflow-y-auto flex-grow">
+    <div class="flex flex-col h-full overflow-hidden relative">
+        <div ref="chatContainer" class="flex flex-col space-y-4 w-full max-w-4xl px-4 pt-6 pb-36 mx-auto overflow-y-hidden flex-grow">
             <div v-for="(message, index) in messages" :key="index" :class="{ 'flex justify-end': message.sender === 'user', 'flex justify-start': message.sender === 'ai' }">
                 <div
                     :class="[
@@ -104,13 +104,13 @@ async function on_generation() {
             <div class="h-24"></div>
         </div>
 
-        <div class="fixed bottom-0 left-0 right-0 w-full flex justify-center p-4 bg-white dark:bg-gray-800 shadow-lg border-t border-gray-200 dark:border-gray-700 z-10">
+        <div class="fixed  bottom-0 left-0 right-0 w-full flex justify-center p-4 bg-white dark:bg-gray-800 shadow-lg border-t border-gray-200 dark:border-gray-700 z-10">
             <div class="w-full max-w-4xl flex flex-col rounded-xl overflow-hidden">
-                <div class="relative flex items-end w-full">
+                <div class="relative flex items-center gap-4 w-full">
                     <Textarea
                         id="chat_input"
                         v-model="prompt"
-                        class="w-full resize-none pr-12 rounded-xl border border-gray-300 dark:border-gray-600 focus:ring focus:ring-blue-200 focus:border-blue-300 dark:focus:ring-blue-700 dark:focus:border-blue-600 p-3"
+                        class="w-full resize-none pr-12 rounded-xl border-gray-300 dark:border-gray-600 focus:ring focus:ring-blue-200 focus:border-blue-300 dark:focus:ring-blue-700 dark:focus:border-blue-600 p-3"
                         autoResize
                         rows="1"
                         placeholder="Pergunte-me alguma coisa..."
@@ -119,7 +119,7 @@ async function on_generation() {
                     <Button
                         :icon="isTextPresent ? 'pi pi-send' : 'pi pi-microphone'"
                         :class="[
-                            'absolute right-2 bottom-2 p-0 w-9 h-9 flex items-center justify-center rounded-full',
+                            'absolute p-0 w-9 h-9 flex items-center justify-center rounded-full',
                             isTextPresent ? 'bg-blue-500 hover:bg-blue-600 text-white' : 'bg-gray-300 hover:bg-gray-400 text-gray-700 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-gray-200'
                         ]"
                         @click="on_generation()"
