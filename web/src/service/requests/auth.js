@@ -12,6 +12,10 @@ class AuthHttp extends HttpService {
     async auth_me() {
         return this.get(this.url('auth', 'me/'));
     }
+
+    async auth_get_session(sessionID) {
+        return this.get(this.url('ai', 'chats-session/:session/message/', { session: sessionID }));
+    }
 }
 
 export const httpAuth = new AuthHttp();

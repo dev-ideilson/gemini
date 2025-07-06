@@ -3,12 +3,14 @@
 from rest_framework.routers import DefaultRouter
 from django.urls import path, include
 from api.core.views import auth 
-from api.core.views.settings import SettingsViewSet
-from api.core.views.settings import SettingsViewSet
+from api.core.views.settings import SettingsViewSet, ChatMessageViewSet, ChatSessionViewSet
+
 
 router = DefaultRouter()
 router.register(r'users', auth.UsersViewSet, basename='users')
 router.register(r'settings', SettingsViewSet, basename='settings')
+router.register(r'ai/chats', ChatMessageViewSet, basename='ai-chats')
+router.register(r'ai/chats-session', ChatSessionViewSet, basename='ai-chats-session')
 # router.register(r'ai/chats', AiChatViewSet, basename='ai-chats')
 # router.register(r'ai/prompts', AiPromptViewSet, basename='ai-prompts')
 # router.register(r'ai/errors', AiErrorViewSet, basename='ai-errors')

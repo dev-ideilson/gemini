@@ -1,8 +1,9 @@
 <script setup>
 import { MessageError } from '@/service/Messaging';
+import { httpAuth } from '@/service/requests/auth';
 import { on, send } from '@/socket';
 import { useAuthStore } from '@/stores/AuthStore';
-import { computed, nextTick, ref } from 'vue'; // Importe nextTick
+import { computed, nextTick, onMounted, ref } from 'vue'; // Importe nextTick
 
 const auth = useAuthStore();
 const prompt = ref('');
@@ -20,6 +21,13 @@ const scrollToBottom = () => {
         }
     });
 };
+
+const sessionId = ref(localStorage.getItem('chat_session_id') || '');
+
+if (!sessionId.value) {
+    sessionId.value = crypto.randomUUID();
+    localStorage.setItem('chat_session_id', sessionId.value);
+}
 
 async function on_generation() {
     if (!isTextPresent.value) return;
@@ -46,17 +54,22 @@ async function on_generation() {
         });
 
         on(namespace, 'chat.ai.response', (data) => {
-            // 3. Adiciona a resposta da IA ao histórico quando ela chega
+            if (data.session_id && data.session_id !== sessionId.value) {
+                sessionId.value = data.session_id;
+                localStorage.setItem('chat_session_id', data.session_id);
+            }
+
             messages.value.push({
                 sender: 'ai',
-                text: data.message, // Supondo que a resposta da IA esteja em data.payload.message
+                text: data.message,
                 timestamp: new Date()
             });
-            scrollToBottom(); // Rola para a nova mensagem da IA
+            scrollToBottom();
         });
 
         await send(namespace, 'chat.ai.generate', {
-            prompt: userMessage // Envia a mensagem original do usuário
+            prompt: userMessage,
+            session_id: sessionId.value
         });
     } catch (error) {
         MessageError(error);
@@ -70,6 +83,20 @@ async function on_generation() {
         scrollToBottom();
     }
 }
+
+onMounted(async () => {
+    try {
+        const { data } = await httpAuth.auth_get_session(sessionId.value);
+
+        messages.value = data.map((msg) => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp)
+        }));
+        scrollToBottom();
+    } catch (error) {
+        console.error('Erro ao carregar histórico:', error);
+    }
+});
 </script>
 
 <template>
@@ -104,7 +131,7 @@ async function on_generation() {
             <div class="h-24"></div>
         </div>
 
-        <div class="fixed  bottom-0 left-0 right-0 w-full flex justify-center p-4 bg-white dark:bg-gray-800 shadow-lg border-t border-gray-200 dark:border-gray-700 z-10">
+        <div class="fixed bottom-0 left-0 right-0 w-full flex justify-center p-4 bg-white dark:bg-gray-800 shadow-lg border-t border-gray-200 dark:border-gray-700 z-10">
             <div class="w-full max-w-4xl flex flex-col rounded-xl overflow-hidden">
                 <div class="relative flex items-center gap-4 w-full">
                     <Textarea
