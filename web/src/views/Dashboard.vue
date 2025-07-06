@@ -1,8 +1,10 @@
 <script setup>
 import { MessageError } from '@/service/Messaging';
 import { on, send } from '@/socket';
+import { useAuthStore } from '@/stores/AuthStore';
 import { computed, nextTick, ref } from 'vue'; // Importe nextTick
 
+const auth = useAuthStore();
 const prompt = ref('');
 // 1. Array para armazenar as mensagens
 const messages = ref([]);
@@ -88,7 +90,7 @@ async function on_generation() {
 
                     <div>
                         <div :class="['font-bold text-sm', { 'text-right': message.sender === 'user' }]">
-                            {{ message.sender === 'ai' ? 'AI ICware' : 'Usuário' }}
+                            {{ message.sender === 'ai' ? 'AI ICware' : `${auth.user.first_name}` }}
                         </div>
                         <p class="mt-1 text-base m-0 whitespace-pre-wrap">{{ message.text }}</p>
                         <div class="text-xs mt-1" :class="{ 'text-right': message.sender === 'user', 'text-gray-500 dark:text-gray-400': !message.isError, 'text-red-700 dark:text-red-300': message.isError }">

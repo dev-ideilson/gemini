@@ -9,10 +9,10 @@ from api.core.models.models_app import Settings
 looger = logging.getLogger(__name__)
 
 class GoogleGenAI:
-    def __init__(self, api_key: str=None, model: str='gemini-1.5-flash'):
+    def __init__(self, api_key: str=None, model: str=''):
         self.api_key = api_key if api_key else Settings.get_value('genai_api_key')
-        self.model = model if model else Settings.get_value('google_genai_model','gemini-2.5-flash')
-        self.language = Settings.get_value('google_genai_language', 'pt-br')
+        self.model = model if model else Settings.get_value('genai_model','gemini-2.5-flash')
+        self.language = Settings.get_value('genai_language', 'pt-br')
         
         if not self.api_key:
             raise ValueError("API key is required for Google GenAI")
