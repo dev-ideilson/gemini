@@ -1,32 +1,44 @@
+import os
 from pathlib import Path
+from environ import Env
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+env = Env()
+Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-8!5@rce$!m0gi)7i9!%tuneqg70q_tb9ty9!u4*xxg3=p5yp_='
+SECRET_KEY = env.str('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env.bool('DEBUG', default=False)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['127.0.0.1', 'localhost'])
 
 # Application definition
 
 INSTALLED_APPS = [
+    'corsheaders',
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'django_filters',
+    'api.core',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -37,6 +49,57 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'config.urls'
+
+REST_FRAMEWORK={
+    'DEFAULT_RENDERER_CLASSES': 
+        ['rest_framework.renderers.JSONRenderer','rest_framework.renderers.BrowsableAPIRenderer']
+        if  DEBUG else
+        ['rest_framework.renderers.JSONRenderer']
+    ,
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.JSONParser',
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny' if DEBUG else 'rest_framework.permissions.IsAuthenticated'
+    ],
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
+}
+
+SIMPLE_JWT={
+    'ALGORITHM': env.str('JWT_ALGORITHM', default='HS256'), 
+    'SIGNING_KEY': env.str('SECRET_KEY', default=SECRET_KEY), 
+    'VERIFYING_KEY': None, 
+    'AUDIENCE': None,
+    'ISSUER': 'zabe-api',
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=120),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+}
+
+CELERY_TASK_QUEUES={
+    'high_priority': {
+        'exchange': 'high_priority',
+        'routing_key': 'high_priority',
+    },
+    'default': {
+        'exchange': 'default',
+        'routing_key': 'default',
+    },
+    'low_priority': {
+        'exchange': 'low_priority',
+        'routing_key': 'low_priority',
+    },
+}
+
+CELERY_TASK_ROUTES={
+    '*.high_priority_task': {'queue':'high_priority'},
+    '*.low_priority_task': {'queue':'low_priority'},
+}
+
 
 TEMPLATES = [
     {
@@ -53,8 +116,24 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'config.wsgi.application'
+CHANNEL_LAYERS={
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [('localhost', 6379)],
+        },
+    },
+}
 
+
+WSGI_APPLICATION = env.str('DJANGO_WSGI_APPLICATION',default='config.wsgi.application')
+
+ASGI_APPLICATION = env.str('DJANGO_ASGI_APPLICATION',default='config.asgi.application') 
+
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
