@@ -46,9 +46,6 @@ async function on_generation() {
     try {
         const namespace = 'core/';
 
-        // Certifique-se que esses 'on' listeners estão configurados para persistir ou serem reconfigurados
-        // Se cada 'send' recriar o listener, isso pode gerar múltiplos listeners para o mesmo evento.
-        // O ideal é que 'on' seja chamado uma vez, talvez no 'onMounted'.
         on(namespace, 'error', (data) => {
             MessageError(data);
         });

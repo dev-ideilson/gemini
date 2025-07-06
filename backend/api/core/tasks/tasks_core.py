@@ -20,7 +20,7 @@ def run_gemini_generate_task(prompt_text, user_group, session_id=None):
         session = genai.get_or_create_session(session_id)
 
         # Salvar mensagem do usuário no histórico
-        ChatMessage.objects.create(session=session, sender='user', text=prompt_text)
+        # ChatMessage.objects.create(session=session, sender='user', text=prompt_text)
 
         # Gerar resposta com histórico (o próprio método já salva a resposta da IA)
         result = genai.generate(prompt_text=prompt_text, session_id=session.session_id)
