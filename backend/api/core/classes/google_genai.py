@@ -1,9 +1,9 @@
+# api/core/classes/google_genai.py
 import json
 import logging
 import traceback
 import requests
 import google.generativeai as genai
-from google.generativeai import GenerationConfig
 from api.core.models.models_app import Settings
 
 looger = logging.getLogger(__name__)
@@ -17,26 +17,27 @@ class GoogleGenAI:
         if not self.api_key:
             raise ValueError("API key is required for Google GenAI")
         
-    def generate(self, prompt_text:str, max_output_tokens:int=1024, temperature:float=0.2, top_p:float=0.8):
+    def generate(self, prompt_text:str):
         """
         Generates text using Google GenAI.
         """
         try:
             genai.configure(api_key=self.api_key)
+            model = genai.GenerativeModel(self.model)
+            response = model.generate_content(f"""
+You are a helpful and friendly AI assistant dedicated to assisting users by understanding their questions thoroughly and providing clear, accurate, and practical answers.
+
+Always aim to make your responses easy to understand and directly useful to the user.
+
+Respond entirely in {self.language}.
+
+User's query: {prompt_text}
+""")
             
-            generation_config = GenerationConfig(
-                max_output_tokens=max_output_tokens,
-                temperature=temperature,
-                top_p=top_p
-            )
+            if response and hasattr(response, 'text') and response.text.strip():
+                return response.text.strip()
             
-            response = genai.generate_text(
-                model=self.model,
-                prompt=prompt_text,
-                generation_config=generation_config
-            )
-            
-            return response.text
+            return None
         
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
             looger.error(f"Error generating text: {e}")

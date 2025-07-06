@@ -13,21 +13,16 @@ class Settings(models.Model):
         verbose_name = 'Setting'
         verbose_name_plural = 'Settings'
     
-    def get_value(self, key: str, default:str=None) -> any:
-        """
-        Returns the value of the setting.
-        """
+    @classmethod
+    def get_value(cls, key: str, default: str = None):
         try:
-            setting = Settings.objects.get(key=key)
+            setting = cls.objects.get(key=key)
             return setting.value
-        except Settings.DoesNotExist:
+        except cls.DoesNotExist:
             return default
-    
-    def set_value(self, key: str, value: any) -> None:
-        """
-        Sets the value of the setting.
-        If the setting does not exist, it creates a new one.
-        """
-        setting, created = Settings.objects.get_or_create(key=key)
+
+    @classmethod
+    def set_value(cls, key: str, value) -> None:
+        setting, created = cls.objects.get_or_create(key=key)
         setting.value = value
         setting.save()

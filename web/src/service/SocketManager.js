@@ -90,6 +90,11 @@ export default class WebSocketManager {
 
     on(namespace = '/', event, callback) {
         this.connect(namespace);
+
+        // Remover callbacks antigos do mesmo tipo
+        this.listeners[namespace] = (this.listeners[namespace] || []).filter((l) => l.event !== event);
+
+        // Adicionar o novo
         this.listeners[namespace].push({ event, callback });
     }
 

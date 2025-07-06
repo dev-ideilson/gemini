@@ -1,20 +1,34 @@
+# api/core/tasks/task_core.py
 from celery import shared_task
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
+from api.core.classes.google_genai import GoogleGenAI
 
 import logging
 
 logger = logging.getLogger(__name__)
 
-@shared_task(bind=False, name='tasks_gemini_genereate.run_task', queue='gemini_generate', max_retries=3, default_retry_delay=10)
-def run_gemini_generate_task(prompt_text: str, max_output_tokens: int = 1024, temperature: float = 0.2, top_p: float = 0.8):
-    """
-    Celery task to generate text using Google GenAI.
-    """
-    from api.core.classes.google_genai import GoogleGenAI
-
+@shared_task(name='tasks_gemini_genereate.run_task', queue='default')
+def run_gemini_generate_task(prompt_text, user_group):
     try:
+        channel_layer = get_channel_layer()
+        
         genai = GoogleGenAI()
-        response = genai.generate(prompt_text, max_output_tokens, temperature, top_p)
-        return response
+        response = genai.generate(prompt_text)
+
+        async_to_sync(channel_layer.group_send)(
+            user_group,
+            {
+                "type": "chat.gemini.response",
+                "message": response
+            }
+        )
+
     except Exception as e:
-        logger.error(f"Error in run_gemini_generate_task: {e}")
-        raise e
+        async_to_sync(channel_layer.group_send)(
+            user_group,
+            {
+                "type": "chat.gemini.response",
+                "message": f"Erro: {str(e)}"
+            }
+        )

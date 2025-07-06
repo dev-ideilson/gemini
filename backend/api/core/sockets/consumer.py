@@ -31,7 +31,7 @@ class WsConsumer(AsyncJsonWebsocketConsumer):
     async def receive_json(self, content, **kwargs):
         message_type = content.get("type")
         payload = content.get("payload", {})
-        await dispatch_message(message_type, self, None, payload)
+        await dispatch_message(message_type, self, payload)
     
     def get_channel_group_name(self):
         """
@@ -39,6 +39,19 @@ class WsConsumer(AsyncJsonWebsocketConsumer):
         """
         return f"user_{self.user.id}_group" if self.user else 'plublic_group'
 
+    async def _send_error(self, message: str):
+        await self.send_json({
+            "type": "error",
+            "payload": {
+                "message": message
+            }
+        })
+
+    async def chat_gemini_response(self, event):
+        await self.send_json({
+            "type": "chat.ai.response",
+            "message": event["message"]
+        })
 
     async def has_permission(self) -> bool:
         return True  # sobrescrito nos filhos
