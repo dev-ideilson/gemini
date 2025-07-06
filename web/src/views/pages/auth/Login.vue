@@ -1,14 +1,78 @@
 <script setup>
+import { MessageError } from '@/service/Messaging';
+import { httpAuth } from '@/service/requests/auth';
+import { useAuthStore } from '@/stores/AuthStore';
+import { onBeforeMount, ref } from 'vue';
+import { useRouter } from 'vue-router';
 
-import { ref } from 'vue';
-
-const email = ref('');
+const auth = useAuthStore();
+const router = useRouter();
+const username = ref('');
 const password = ref('');
 const checked = ref(false);
+const loading = ref(false);
+
+const validateForm = () => {
+    if (!username.value) {
+        MessageError('O usuário é obrigatório.', 'Atenção');
+        return false;
+    }
+
+    if (!password.value) {
+        MessageError('A senha é obrigatória.', 'Atenção');
+        return false;
+    } else if (password.value.length < 6) {
+        MessageError('A senha deve ter pelo menos 6 caracteres.', 'Atenção');
+        return false;
+    }
+
+    return true;
+};
+
+async function signin_submit() {
+    if (!validateForm()) return;
+
+    loading.value = true;
+
+    try {
+        const credentials = {
+            username: username.value,
+            password: password.value
+        };
+
+        const response = await httpAuth.auth_login(credentials);
+
+        const data = response.data;
+        const user = data?.user;
+
+        if (!user) {
+            MessageError('Resposta da API malformada. Usuário não encontrado.');
+            return;
+        }
+
+        if (!user.is_active) {
+            MessageError('Usuário inativo. Contate o administrador.');
+            return;
+        }
+
+        // Tudo certo
+        auth.setAuth(data);
+        router.push('/');
+    } catch (error) {
+        if (error.status === 401) {
+            MessageError('Credenciais inválidas.', 'Falha no login');
+        } else {
+            MessageError('Erro de conexão. Tente novamente.', 'Falha no login');
+        }
+    } finally {
+        loading.value = false;
+    }
+}
+
+onBeforeMount(() => {});
 </script>
 
 <template>
-
     <div class="bg-surface-50 dark:bg-surface-950 flex items-center justify-center min-h-screen min-w-[100vw] overflow-hidden">
         <div class="flex flex-col items-center justify-center">
             <div style="border-radius: 56px; padding: 0.3rem; background: linear-gradient(180deg, var(--primary-color) 10%, rgba(33, 150, 243, 0) 30%)">
@@ -37,7 +101,7 @@ const checked = ref(false);
 
                     <div>
                         <label for="email1" class="block text-surface-900 dark:text-surface-0 text-xl font-medium mb-2">Email</label>
-                        <InputText id="email1" type="text" placeholder="Email address" class="w-full md:w-[30rem] mb-8" v-model="email" />
+                        <InputText id="email1" type="text" placeholder="Email address" class="w-full md:w-[30rem] mb-8" v-model="username" />
 
                         <label for="password1" class="block text-surface-900 dark:text-surface-0 font-medium text-xl mb-2">Password</label>
                         <Password id="password1" v-model="password" placeholder="Password" :toggleMask="true" class="mb-4" fluid :feedback="false"></Password>
@@ -49,11 +113,25 @@ const checked = ref(false);
                             </div>
                             <span class="font-medium no-underline ml-2 text-right cursor-pointer text-primary">Forgot password?</span>
                         </div>
-                        <Button label="Sign In" class="w-full" as="router-link" to="/"></Button>
+                        <Button label="Fazer Login" class="w-full" v-on:click="signin_submit()" :loading="loading"></Button>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
+    <div class="card flex justify-center">
+        <Toast position="bottom-right" group="headless" @close="visible = false">
+            <template #container="{ message, closeCallback }">
+                <section class="flex flex-col p-4 gap-4 w-full rounded-xl">
+                    <div class="flex items-center gap-5">
+                        <span class="font-bold text-xl">{{ message.summary }}</span>
+                    </div>
+                    <div class="flex flex-col gap-2 text-2xl">
+                        {{ message.detail }}
+                    </div>
+                </section>
+            </template>
+        </Toast>
     </div>
 </template>
 

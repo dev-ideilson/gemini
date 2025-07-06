@@ -67,5 +67,19 @@ function isOutsideClicked(event) {
         </div>
         <div class="layout-mask animate-fadein"></div>
     </div>
-    <Toast />
+    <ConfirmDialog group="headless" />
+    <div class="card flex justify-center">
+        <Toast position="bottom-right" group="headless" @close="visible = false">
+            <template #container="{ message, closeCallback }">
+                <section class="flex flex-col p-4 gap-4 w-full rounded-xl">
+                    <div class="flex items-center gap-5">
+                        <span class="font-bold text-xl">{{ message.summary }}</span>
+                    </div>
+                    <div class="flex flex-col gap-2 text-2xl">
+                        {{ message.detail }}
+                    </div>
+                </section>
+            </template>
+        </Toast>
+    </div>
 </template>
