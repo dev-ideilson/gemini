@@ -25,6 +25,6 @@ pycryptodome==3.23.*
 cryptography==45.0.*
 paramiko==3.5.*
 
-google-generativeai==0.3.*
-google-cloud-storage==2.10.*
-openai==1.35.*
+google-generativeai
+google-cloud-storage
+openai
