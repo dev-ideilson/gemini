@@ -111,14 +111,14 @@ onMounted(async () => {
 </script>
 
 <template>
-    <div class="flex flex-row h-screen overflow-hidden">
+    <div class="flex items-center justify-center h-full overflow-hidden">
         <!-- Conteúdo principal -->
-        <main class="flex flex-col flex-grow h-full overflow-hidden">
-            <div ref="chatContainer" class="flex flex-col space-y-4 w-full px-4 pt-6 pb-36 overflow-y-auto flex-grow">
-                <div v-for="(message, index) in messages" :key="index" :class="{ 'flex justify-end': message.sender === 'user', 'flex justify-start': message.sender === 'ai' }">
+        <main class="flex flex-col items-center justify-center max-w-[900px] h-full overflow-hidden">
+            <div ref="chatContainer" class="flex flex-col space-y-4 w-full  pt-6  overflow-y-hidden flex-grow">
+                <!-- <div v-for="(message, index) in messages" :key="index" :class="{ 'flex justify-end p-2': message.sender === 'user', 'flex justify-start p-2': message.sender === 'ai' }">
                     <div
                         :class="[
-                            'flex gap-3 p-3 rounded-lg shadow max-w-[85%] md:max-w-[75%]',
+                            'flex gap-3 p-10 rounded-lg shadow',
                             {
                                 'bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100': message.sender === 'ai',
                                 'bg-green-100 dark:bg-green-900 text-green-900 dark:text-green-100': message.sender === 'user',
@@ -139,38 +139,76 @@ onMounted(async () => {
                         </div>
                         <Avatar v-if="message.sender === 'user'" image="https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png" shape="circle" class="flex-shrink-0 w-8 h-8" />
                     </div>
+                </div> -->
+                <div v-for="(message, index) in messages" :key="index" :class="{
+                    'flex items-center justify-end p-2': message.sender === 'user',
+                    'flex items-center justify-start p-2': message.sender === 'ai'
+                }" class="w-full">
+                    <div :class="[
+                        'flex gap-3 p-4 rounded-lg shadow max-w-[100%] w-full break-words overflow-hidden',
+                        {
+                            'bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100': message.sender === 'ai',
+                            'bg-green-100 dark:bg-green-900 text-green-900 dark:text-green-100': message.sender === 'user',
+                            'bg-red-100 dark:bg-red-900 text-red-900 dark:text-red-100': message.isError
+                        }
+                    ]">
+                        <Avatar v-if="message.sender === 'ai'"
+                            image="https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png" shape="circle"
+                            class="flex-shrink-0 w-8 h-8" />
+                        <div class="min-w-0 w-full break-words">
+                            <div :class="['font-bold text-sm', { 'text-right': message.sender === 'user' }]">
+                                {{ message.sender === 'ai' ? 'AI ICware' : `${auth.user.first_name}` }}
+                            </div>
+                            <div class="mt-1 text-base m-0 message-content break-words whitespace-pre-wrap overflow-x-auto lg:overflow-hidden"
+                                :class="{ 'text-right': message.sender === 'user', 'text-left': message.sender === 'ai' }"
+                                v-html="message.renderedText"></div>
+
+                            <div class="text-xs mt-1" :class="{
+                                'text-right': message.sender === 'user',
+                                'text-gray-500 dark:text-gray-400': !message.isError,
+                                'text-red-700 dark:text-red-300': message.isError
+                            }">
+                                {{ new Date(message.timestamp).toLocaleDateString('pt-BR', {
+                                    day: '2-digit', month:
+                                        '2-digit', year: 'numeric'
+                                }) }} às
+                                {{ new Date(message.timestamp).toLocaleTimeString('pt-BR', {
+                                    hour: '2-digit', minute:
+                                        '2-digit'
+                                }) }}
+                            </div>
+                        </div>
+                        <Avatar v-if="message.sender === 'user'"
+                            image="https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png" shape="circle"
+                            class="flex-shrink-0 w-8 h-8" />
+                    </div>
                 </div>
+
+
                 <div class="h-24"></div>
             </div>
 
-            <div class="fixed bottom-0 left-0 right-0 w-full flex justify-center p-4 bg-white dark:bg-gray-800 shadow-lg border-t border-gray-200 dark:border-gray-700 z-10">
+            <div
+                class="fixed bottom-0 left-0 right-0 w-full flex justify-center p-4 bg-white dark:bg-gray-800 shadow-lg border-t border-gray-200 dark:border-gray-700 z-10">
                 <div class="w-full max-w-4xl flex flex-col rounded-xl overflow-hidden">
                     <div class="relative flex items-center gap-4 w-full">
-                        <Textarea
-                            id="chat_input"
-                            v-model="prompt"
-                            class="w-full resize-none pr-12 rounded-xl border-gray-300 dark:border-gray-600 focus:ring focus:ring-blue-200 focus:border-blue-300 dark:focus:ring-blue-700 dark:focus:border-blue-600 p-3"
-                            autoResize
-                            rows="1"
-                            placeholder="Pergunte-me alguma coisa..."
-                            @keyup.enter.prevent="on_generation()"
-                        />
-                        <Button
-                            :icon="isTextPresent ? 'pi pi-send' : 'pi pi-microphone'"
-                            :class="[
-                                'absolute p-0 w-9 h-9 flex items-center justify-center rounded-full',
-                                isTextPresent ? 'bg-blue-500 hover:bg-blue-600 text-white' : 'bg-gray-300 hover:bg-gray-400 text-gray-700 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-gray-200'
-                            ]"
-                            @click="on_generation()"
-                            aria-label="Send message"
-                            :disabled="!isTextPresent"
-                        />
+                        <Textarea id="chat_input" v-model="prompt"
+                            class="w-full resize-none pr-12 rounded-xl max-h-40 border-gray-300 dark:border-gray-600 focus:ring focus:ring-blue-200 focus:border-blue-300 dark:focus:ring-blue-700 dark:focus:border-blue-600 p-3"
+                            autoResize rows="1" placeholder="Pergunte-me alguma coisa..."
+                            @keyup.enter.prevent="on_generation()" />
+                        <Button :icon="isTextPresent ? 'pi pi-send' : 'pi pi-microphone'" :class="[
+                            'absolute p-0 w-9 h-9 flex items-center justify-center rounded-full',
+                            isTextPresent ? 'bg-blue-500 hover:bg-blue-600 text-white' : 'bg-gray-300 hover:bg-gray-400 text-gray-700 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-gray-200'
+                        ]" @click="on_generation()" aria-label="Send message" :disabled="!isTextPresent" />
                     </div>
 
                     <div class="flex items-center justify-between p-2 mt-2">
                         <div class="flex items-center gap-4 text-gray-600 dark:text-gray-300">
-                            <span class="pi pi-plus text-xl hover:text-blue-500 dark:hover:text-blue-400 cursor-pointer" title="Adicionar Anexo"></span>
-                            <span class="pi pi-sliders-h text-xl hover:text-blue-500 dark:hover:text-blue-400 cursor-pointer" title="Configurações"></span>
+                            <span class="pi pi-plus text-xl hover:text-blue-500 dark:hover:text-blue-400 cursor-pointer"
+                                title="Adicionar Anexo"></span>
+                            <span
+                                class="pi pi-sliders-h text-xl hover:text-blue-500 dark:hover:text-blue-400 cursor-pointer"
+                                title="Configurações"></span>
                             <span class="text-sm">Ferramentas</span>
                         </div>
                     </div>
@@ -215,6 +253,7 @@ onMounted(async () => {
         font-size: 0.8em;
         padding: 0.8em;
     }
+
     .message-content code {
         font-size: 0.85em;
     }
